@@ -20,7 +20,7 @@ struct DataFrameCircularBuffer
 { // a circular buffer implementation. Read the README for more details.
     size_t bufferSize = 2;
     DataFrame* dataFrameArray;
-    unsigned int headIndex = 0, tailIndex = 0, numberOfItemsInBuffer = 0;
+    unsigned int headIndex = 0, tailIndex = 0, numberOfItemsInBuffer = 0, lastIndexWritten = 0;
 
     DataFrameCircularBuffer(size_t bufferSize) : bufferSize(bufferSize) {
         dataFrameArray = new DataFrame[bufferSize];
@@ -38,13 +38,14 @@ struct DataFrameCircularBuffer
             throw std::string("DataFrameCircularBuffer: buffer full, will not add another item.");
         }
         dataFrameArray[headIndex] = dataFrameItem; // copy dataFrameItem into the array.
+        lastIndexWritten = headIndex;
         headIndex++;
         if (headIndex >= bufferSize) headIndex = 0;
         numberOfItemsInBuffer++;
     };
 
-    DataFrame* getDataFrameAtHead() {
-        return &dataFrameArray[headIndex];
+    DataFrame* getDataFrameAtLastIndexWritten() {
+        return &dataFrameArray[lastIndexWritten];
     }
 
     /**

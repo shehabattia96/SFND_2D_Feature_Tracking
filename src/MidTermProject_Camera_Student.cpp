@@ -26,6 +26,15 @@ int main(int argc, const char *argv[])
 
     // data location
     string dataPath = "../";
+    
+    string detectorType = "SHITOMASI"; //SHITOMASI, HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
+    string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
+    string descriptorFamily = "DES_BINARY"; // DES_BINARY, DES_HOG (Use HOG with SIFT descriptor only)
+    string matcherType = "MAT_FLANN"; // MAT_BF (Do not use this with HOG (SIFT) decriptors), MAT_FLANN
+    string selectorType = "SEL_KNN"; // SEL_NN, SEL_KNN
+
+    bool bFocusOnVehicle = true;
+    bool bLimitKpts = true;
 
     // camera
     string imgBasePath = dataPath + "images/";
@@ -62,6 +71,7 @@ int main(int argc, const char *argv[])
         // push image into data frame buffer
         DataFrame frame;
         frame.cameraImg = imgGray;
+        frame.imageIndex = imgIndex;
         dataBuffer.writeToBuffer(frame);
 
         //// EOF STUDENT ASSIGNMENT
@@ -71,7 +81,6 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "ORB"; //SHITOMASI,HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
@@ -109,17 +118,19 @@ int main(int argc, const char *argv[])
         //// TASK MP.3 -> only keep keypoints on the preceding vehicle
 
         // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = true;
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
-            // ...
+            keypoints.erase(std::remove_if(keypoints.begin(), keypoints.end(),
+                               [vehicleRect] (cv::KeyPoint keyPoint)
+                               {
+                                   return !vehicleRect.contains(keyPoint.pt);
+                               }), keypoints.end());
         }
 
         //// EOF STUDENT ASSIGNMENT
 
         // optional : limit number of keypoints (helpful for debugging and learning)
-        bool bLimitKpts = true;
         if (bLimitKpts)
         {
             int maxKeypoints = 20;
@@ -133,22 +144,19 @@ int main(int argc, const char *argv[])
         }
 
         // push keypoints and descriptor for current frame to end of data buffer
-        dataBuffer.getDataFrameAtHead() -> keypoints = keypoints;
+        dataBuffer.getDataFrameAtLastIndexWritten() -> keypoints = keypoints;
         cout << "#2 : DETECT KEYPOINTS done" << endl;
 
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.4 -> add the following descriptors in file matching2D.cpp and enable string-based selection based on descriptorType
-        //// -> BRIEF, ORB, FREAK, AKAZE, SIFT
-
         cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints(keypoints, imgGray, descriptors, descriptorType);
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
-        dataBuffer.getDataFrameAtHead() -> descriptors = descriptors;
+        dataBuffer.getDataFrameAtLastIndexWritten()->descriptors = descriptors;
 
         cout << "#3 : EXTRACT DESCRIPTORS done" << endl;
 
@@ -158,23 +166,19 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
             //// TASK MP.6 -> add KNN match selection and perform descriptor distance ratio filtering with t=0.8 in file matching2D.cpp
-
             DataFrame firstDataFrameInBuffer = dataBuffer.readFromBuffer();
             matchDescriptors(firstDataFrameInBuffer.keypoints, keypoints,
                              firstDataFrameInBuffer.descriptors, descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorFamily, matcherType, selectorType);
 
             //// EOF STUDENT ASSIGNMENT
 
             // store matches in current data frame
-            dataBuffer.getDataFrameAtHead() -> kptMatches = matches;
+            dataBuffer.getDataFrameAtLastIndexWritten() -> kptMatches = matches;
 
             cout << "#4 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 
