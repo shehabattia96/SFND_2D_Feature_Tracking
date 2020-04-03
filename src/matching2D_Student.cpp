@@ -61,8 +61,70 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0 << " ms" << endl;
 }
 
+
+// Detect keypoints in image using FAST 
+void detKeypointsFAST(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    cv::Ptr<cv::FastFeatureDetector> detector = cv::FastFeatureDetector::create();
+    cv::Mat output;
+    detector->detect(img, keypoints, output);
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, "FAST");
+}
+
+// Detect keypoints in image using ORB 
+void detKeypointsORB(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    cv::Ptr<cv::ORB> detector = cv::ORB::create();
+    cv::Mat output;
+    detector->detect(img, keypoints, output);
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, "ORB");
+}
+
+// Detect keypoints in image using BRISK 
+void detKeypointsBRISK(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    cv::Ptr<cv::BRISK> detector = cv::BRISK::create( );
+    cv::Mat output;
+    detector->detect(img, keypoints, output);
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, "BRISK");
+}
+
+// Detect keypoints in image using AKAZE 
+void detKeypointsAKAZE(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    cv::Ptr<cv::AKAZE> detector = cv::AKAZE::create( );
+    cv::Mat output;
+    detector->detect(img, keypoints, output);
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, "AKAZE");
+}
+
+// Detect keypoints in image using SIFT 
+void detKeypointsSIFT(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create( );
+    cv::Mat output;
+    detector->detect(img, keypoints, output);
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, "SIFT");
+}
+
 // Detect keypoints in image using the traditional Shi-Thomasi detector
 void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    detKeypointsGoodFeaturesToTrack(keypoints, img, bVis, false);
+}
+
+// Detect keypoints in image using the HARRIS detector
+void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis)
+{
+    detKeypointsGoodFeaturesToTrack(keypoints, img, bVis, true);
+}
+
+void detKeypointsGoodFeaturesToTrack(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis, bool useHarris)
 {
     // compute detector parameters based on image size
     int blockSize = 4;       //  size of an average block for computing a derivative covariation matrix over each pixel neighborhood
@@ -76,26 +138,31 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
     // Apply corner detection
     double t = (double)cv::getTickCount();
     vector<cv::Point2f> corners;
-    cv::goodFeaturesToTrack(img, corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, false, k);
+    cv::goodFeaturesToTrack(img, corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, useHarris, k);
 
     // add corners to result vector
     for (auto it = corners.begin(); it != corners.end(); ++it)
     {
-
         cv::KeyPoint newKeyPoint;
         newKeyPoint.pt = cv::Point2f((*it).x, (*it).y);
         newKeyPoint.size = blockSize;
         keypoints.push_back(newKeyPoint);
     }
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-    cout << "Shi-Tomasi detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
+    cout << (useHarris ? "Harris" : "Shi-Tomasi") << "detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
 
+    // visualize results
+    visualizeKeyPoints(keypoints, img, bVis, (std::string)(useHarris ? "Harris" : "Shi-Tomasi"));
+}
+
+void visualizeKeyPoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis, std::string detectorName)
+{
     // visualize results
     if (bVis)
     {
         cv::Mat visImage = img.clone();
         cv::drawKeypoints(img, keypoints, visImage, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        string windowName = "Shi-Tomasi Corner Detector Results";
+        string windowName = "Visualize KeyPoints results for detector " + detectorName;
         cv::namedWindow(windowName, 6);
         imshow(windowName, visImage);
         cv::waitKey(0);

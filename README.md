@@ -33,6 +33,25 @@ The idea of the camera course is to build a collision detection system - that's 
 - References:
   - [Circular buffer example](https://stackoverflow.com/a/827749/9824103)
 
+### Keypoint Detection
+
+- Acceptance Criteria: Implement detectors HARRIS, FAST, BRISK, ORB, AKAZE and SIFT and make them selectable by setting a string accordingly.
+- Methods in [./src/matching2D.hpp](./src/matching2D.hpp):
+  - detKeypointsHarris
+    - Reference: [https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=goodfeaturestotrack](https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=goodfeaturestotrack)
+  - detKeypointsFAST
+    - Reference: [https://docs.opencv.org/master/df/d0c/tutorial_py_fast.html](https://docs.opencv.org/master/df/d0c/tutorial_py_fast.html)
+  - detKeypointsBRISK
+    - Reference: [https://docs.opencv.org/2.4/modules/features2d/doc/feature_detection_and_description.html](https://docs.opencv.org/2.4/modules/features2d/doc/feature_detection_and_description.html)
+  - detKeypointsORB
+    - Reference: [https://docs.opencv.org/2.4/modules/features2d/doc/feature_detection_and_description.html](https://docs.opencv.org/2.4/modules/features2d/doc/feature_detection_and_description.html)
+  - detKeypointsAKAZE
+    - Reference: [https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html](https://docs.opencv.org/3.4/db/d70/tutorial_akaze_matching.html)
+  - detKeypointsSIFT
+    - Reference: [https://docs.opencv.org/3.4/d5/d3c/classcv_1_1xfeatures2d_1_1SIFT.html](https://docs.opencv.org/3.4/d5/d3c/classcv_1_1xfeatures2d_1_1SIFT.html)
+- Notes:
+  - I've noticed that some keypoints are spot on and other ones sometimes miss that target by a couple of pixels. Rarely the keypoints are completely off (Only ORB was totally wrong, but I read that it may be because of the descriptor needing to be brute force instead of flann.).
+  - I ignored adding hyper-parameters to the detectors, but will tweak the parameters for the descriptors.
 
 ## Dependencies for Running Locally
 
